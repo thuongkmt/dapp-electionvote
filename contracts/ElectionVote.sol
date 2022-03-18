@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract ElectionVote {
-    uint public numberOfCandidate;
+    uint public numberOfCandidate = 0;
 
     struct Candidator {
         uint id;
@@ -15,14 +15,14 @@ contract ElectionVote {
     mapping(uint => Candidator) public candidators;
 
     function setCandidator(string memory _name) public {
-        numberOfCandidate ++;
         candidators[numberOfCandidate] = Candidator(numberOfCandidate, _name, 0); 
+        numberOfCandidate ++;
     }
 
     //1. get list of candidator
     function getCandidator() view public returns(Candidator[] memory) {
         Candidator[] memory _candidators = new Candidator[](numberOfCandidate);
-        for(uint i = 1; i<= numberOfCandidate; i ++) {
+        for(uint i = 0; i < numberOfCandidate; i ++) {
             Candidator storage _candidator = candidators[i];
             _candidators[i] = _candidator;
         }

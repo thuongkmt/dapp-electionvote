@@ -1,14 +1,14 @@
 import './App.css';
 import { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { ethers } from 'ethers'
-import Greeter from './artifacts/contracts/Greeter.sol/Greeter.json'
 import ElectionVote from './artifacts/contracts/ElectionVote.sol/ElectionVote.json'
 
-const greeterAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-const ElectionVoteAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+const ElectionVoteAddress = "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
 
 function App() {
-  const [greeting, setGreetingValue] = useState()
+  const [candidateName, setCandidateName] = useState()
+  const [candidateId, setCandidateId] = useState()
 
   /**
    * Common area
@@ -17,38 +17,6 @@ function App() {
   // request access to the user's MetaMask account
   async function requestAccount() {
     await window.ethereum.request({ method: 'eth_requestAccounts' });
-  }
-
-  /**
-   * Greeter area
-   */
-
-  // call the smart contract, read the current greeting value
-  async function fetchGreeting() {
-    if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const contract = new ethers.Contract(greeterAddress, Greeter.abi, provider)
-      try {
-        const data = await contract.greet()
-        console.log('data: ', data)
-      } catch (err) {
-        console.log("Error: ", err)
-      }
-    }    
-  }
-
-  // call the smart contract, send an update
-  async function setGreeting() {
-    if (!greeting) return
-    if (typeof window.ethereum !== 'undefined') {
-      await requestAccount()
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner()
-      const contract = new ethers.Contract(greeterAddress, Greeter.abi, signer)
-      const transaction = await contract.setGreeting(greeting)
-      await transaction.wait()
-      fetchGreeting()
-    }
   }
 
   /**
@@ -61,7 +29,9 @@ function App() {
 
       try {
         const highestVote = await contract.getHighestVote()
-        console.log('HighestVote: ', highestVote)
+        console.log('HighestVote: ', parseInt(highestVote, 16))
+        document.getElementById('highest-vote').innerHTML = "";
+        document.getElementById('highest-vote').innerHTML = parseInt(highestVote, 16);
       } 
       catch (err) {
           console.log("HighestVote - Error: ", err)
@@ -76,12 +46,74 @@ function App() {
       const contract = new ethers.Contract(ElectionVoteAddress, ElectionVote.abi, provider)
       try {
         const numberOfCandidate = await contract.numberOfCandidate()
-        console.log('numberOfCandidate: ', numberOfCandidate)
+        var number = parseInt(numberOfCandidate, 16);
+        console.log('numberOfCandidate: ', number)
       } 
       catch (err) {
           console.log("numberOfCandidate - Error: ", err)
       }
     }    
+  }
+
+  async function getCandidator(){
+    if (typeof window.ethereum !== 'undefined') {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const contract = new ethers.Contract(ElectionVoteAddress, ElectionVote.abi, provider)
+      try {
+        const listCandidator = await contract.getCandidator()
+
+        var _listCandidate = new Array();
+        for(var i=0; i < listCandidator.length; i++){
+          var candidate = listCandidator[i];
+          console.log("candidate", parseInt(candidate.id._hex, 16));
+          console.log("candidate", candidate.name);
+          console.log("candidate", parseInt(candidate.voteCount._hex, 16));
+          _listCandidate.push({
+                id: parseInt(candidate.id._hex, 16),
+                name: candidate.name,
+                voteCount: parseInt(candidate.voteCount._hex, 16)
+            });
+        }
+        console.log("_list", JSON.stringify(_listCandidate));
+        var element = "";
+        for(var i=0; i<_listCandidate.length; i++){
+          element += '<tr><th scope="row">' + (i+1) 
+          +'</th><td>' + _listCandidate[i].id + '</td><td>' + _listCandidate[i].name + '</td><td>' + _listCandidate[i].voteCount + '</td></tr>'
+        }
+        console.log("element", element);
+        document.getElementById('bindcandidate').innerHTML = element;
+        //ReactDOM.render(element, document.getElementById('bindcandidate'));
+      } 
+      catch (err) {
+          console.log("listCandidator - Error: ", err)
+      }
+    }    
+  }
+
+  async function setCandidator() {
+    if (!candidateName) return
+    if (typeof window.ethereum !== 'undefined') {
+      await requestAccount()
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(ElectionVoteAddress, ElectionVote.abi, signer)
+      const transaction = await contract.setCandidator(candidateName)
+      await transaction.wait()
+      getCandidator()
+    }
+  }
+
+  async function voteCandidator() {
+    if (!candidateId) return
+    if (typeof window.ethereum !== 'undefined') {
+      await requestAccount()
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(ElectionVoteAddress, ElectionVote.abi, signer)
+      const transaction = await contract.voteCandidator(candidateId)
+      await transaction.wait()
+      getCandidator()
+    }
   }
 
   async function initElectionVoteContract(){
@@ -97,25 +129,60 @@ function App() {
   return (
     <div className="App">
       <div className="container">
-        <div className="row">
+        <div className='row'>
+          <div className="header">
+            <h1>ELECTION VOTE</h1>
+            <p>Welcome to the election vote using blockchain technology</p>
+          </div>
+        </div>
+
+        <div className="row content">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Id</th>
+                <th scope="col">Name</th>
+                <th scope="col">VoteCount</th>
+              </tr>
+            </thead>
+            <tbody id="bindcandidate">
+            
+            </tbody>
+          </table>
+
           <div className="col">
-            <button type="button" className="btn btn-primary" onClick={fetchGreeting}>Fetch Greeting</button>
-            <button type='button' className='btn btn-secondary' onClick={setGreeting}>Set Greeting</button>
-            <div className="mb-3">
-              <label htmlFor="greetingWord" className="form-label">Greeting</label>
-              <input className="form-control" id="greetingWord"  onChange={e => setGreetingValue(e.target.value)} placeholder="Set greeting" />
+            <button type="button" className="btn btn-default" onClick={numberOfCandidate}>Number of candidate</button>
+            <button type="button" className="btn btn-default" onClick={getHighestVote}>Highest vote (<span id="highest-vote">0</span>)</button>
+            <button type="button" className="btn btn-default" onClick={getCandidator}>Reload</button>
+          </div>
+
+          <div className="card">
+            <div className="card-body">
+              <div className='row'>
+                <div className='col'>
+                  <input className="form-control form-control-lg" onChange={e => setCandidateName(e.target.value)} type="text" placeholder="Add candidate" aria-label=".form-control-lg example" />
+                </div>
+                <div className='col'>
+                  <button type="button" className="btn btn-primary" onClick={setCandidator}>Add candidate</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="col">
-            Election vote App
-            <div>
-            <button type="button" className="btn btn-primary" onClick={numberOfCandidate}>Number of candidate</button>
-            <button type="button" className="btn btn-primary" onClick={getHighestVote}>Highest vote</button>
+
+          <div className="card">
+            <div className="card-body">
+              <div className='row'>
+                <div className='col'>
+                  <input className="form-control form-control-lg" onChange={e => setCandidateId(e.target.value)} type="text" placeholder="Vote by id" aria-label=".form-control-lg example" />
+                </div>
+                <div className='col'>
+                  <button type="button" className="btn btn-primary" onClick={voteCandidator}>Vote</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="col">
-            Column
-          </div>
+
         </div>
       </div>
     </div>
