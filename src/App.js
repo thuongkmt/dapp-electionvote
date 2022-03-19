@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { ethers } from 'ethers'
 import ElectionVote from './artifacts/contracts/ElectionVote.sol/ElectionVote.json'
 
-const ElectionVoteAddress = "0x610178dA211FEF7D417bC0e6FeD39F05609AD788"
+const ElectionVoteAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
 
 function App() {
   const [candidateName, setCandidateName] = useState()
@@ -29,9 +29,9 @@ function App() {
 
       try {
         const highestVote = await contract.getHighestVote()
-        console.log('HighestVote: ', parseInt(highestVote, 16))
+        console.log('HighestVote: ', parseInt(highestVote.voteCount, 16))
         document.getElementById('highest-vote').innerHTML = "";
-        document.getElementById('highest-vote').innerHTML = parseInt(highestVote, 16);
+        document.getElementById('highest-vote').innerHTML = parseInt(highestVote.voteCount, 16);
       } 
       catch (err) {
           console.log("HighestVote - Error: ", err)

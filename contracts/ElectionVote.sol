@@ -31,7 +31,7 @@ contract ElectionVote {
 
     //2. vote for candidator
     function voteCandidator(uint _id) public {
-        for(uint i = 1; i<= numberOfCandidate; i ++){
+        for(uint i = 0; i < numberOfCandidate; i ++){
             if(candidators[i].id == _id){
                 candidators[i].voteCount ++;
                 break;
@@ -41,13 +41,10 @@ contract ElectionVote {
 
     //3. get highest vote candidator
     function getHighestVote() public view returns (Candidator memory) {
-        Candidator memory _candidator;
-        for(uint i = 1; i<= numberOfCandidate; i ++) {
-            if(candidators[i].voteCount >= candidators[i + 1].voteCount){
+        Candidator memory _candidator = candidators[0];
+        for(uint i = 0; i < numberOfCandidate; i ++) {
+            if(_candidator.voteCount < candidators[i].voteCount){
                 _candidator = candidators[i];
-            }
-            else{
-                _candidator = candidators[i + 1];
             }
         }
         return _candidator;
